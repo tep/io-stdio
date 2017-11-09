@@ -41,7 +41,7 @@ func New() *Stdio {
 	return &Stdio{&v, &q, os.Stdout, os.Stderr}
 }
 
-func (s *Stdio) Verbose(v *bool) *bool {
+func (s *Stdio) VerboseVar(v *bool) *bool {
 	old := s.verbose
 	if v != nil {
 		s.verbose = v
@@ -49,7 +49,7 @@ func (s *Stdio) Verbose(v *bool) *bool {
 	return old
 }
 
-func (s *Stdio) Quiet(q *bool) *bool {
+func (s *Stdio) QuietVar(q *bool) *bool {
 	old := s.quiet
 	if q != nil {
 		s.quiet = q
@@ -108,6 +108,9 @@ func (s *Stdio) Warnf(msg string, args ...interface{})    { s.Warn(fmt.Sprintf(m
 func (s *Stdio) Babblef(msg string, args ...interface{})  { s.Babble(fmt.Sprintf(msg, args...)) }
 func (s *Stdio) Cautionf(msg string, args ...interface{}) { s.Caution(fmt.Sprintf(msg, args...)) }
 func (s *Stdio) Mentionf(msg string, args ...interface{}) { s.Mention(fmt.Sprintf(msg, args...)) }
+
+func QuietVar(v *bool)   { defaultStdio.QuietVar(v) }
+func VerboseVar(v *bool) { defaultStdio.VerboseVar(v) }
 
 func Abort(err error)                     { defaultStdio.Abort(err) }
 func Die(msg string, args ...interface{}) { defaultStdio.Die(msg, args...) }

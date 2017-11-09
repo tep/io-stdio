@@ -25,8 +25,8 @@ func (tc *testcase) test(t *testing.T) {
 	stderr := new(bytes.Buffer)
 
 	s := New()
-	s.Verbose(&tc.vval)
-	s.Quiet(&tc.qval)
+	s.VerboseVar(&tc.vval)
+	s.QuietVar(&tc.qval)
 	s.Stdout(stdout)
 	s.Stderr(stderr)
 
