@@ -19,8 +19,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-
-	"toolman.org/base/toolman"
 )
 
 var (
@@ -88,17 +86,6 @@ func (s *Stdio) emit(v bool, w io.Writer, args ...interface{}) {
 	fmt.Fprintln(w, args...)
 }
 
-func (s *Stdio) Abort(err error) {
-	if *s.quiet {
-		err = nil
-	}
-	toolman.Abort(err)
-}
-
-func (s *Stdio) Die(msg string, args ...interface{}) {
-	s.Abort(fmt.Errorf(msg, args...))
-}
-
 func (s *Stdio) Warn(args ...interface{})    { s.emit(false, s.stderr, args...) }
 func (s *Stdio) Babble(args ...interface{})  { s.emit(true, s.stdout, args...) }
 func (s *Stdio) Caution(args ...interface{}) { s.emit(true, s.stderr, args...) }
@@ -111,9 +98,6 @@ func (s *Stdio) Mentionf(msg string, args ...interface{}) { s.Mention(fmt.Sprint
 
 func QuietVar(v *bool)   { defaultStdio.QuietVar(v) }
 func VerboseVar(v *bool) { defaultStdio.VerboseVar(v) }
-
-func Abort(err error)                     { defaultStdio.Abort(err) }
-func Die(msg string, args ...interface{}) { defaultStdio.Die(msg, args...) }
 
 func Warn(args ...interface{})    { defaultStdio.Warn(args...) }
 func Babble(args ...interface{})  { defaultStdio.Babble(args...) }
