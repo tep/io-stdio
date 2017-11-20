@@ -24,19 +24,76 @@ import (
 var (
 	quietValue   = false
 	verboseValue = false
-	defaultStdio = &Stdio{&verboseValue, &quietValue, os.Stdout, os.Stderr}
+	syncValue    = false
+	defaultStdio = &Stdio{&verboseValue, &quietValue, &syncValue, false, os.Stdout, os.Stderr}
 )
 
 type Stdio struct {
 	verbose *bool
 	quiet   *bool
+	sync    *bool
+	auto    bool
 	stdout  io.Writer
 	stderr  io.Writer
 }
 
-func New() *Stdio {
-	var v, q bool
-	return &Stdio{&v, &q, os.Stdout, os.Stderr}
+func New(settings ...Setting) *Stdio {
+	var vv, qv, sv bool
+	s := &Stdio{&vv, &qv, &sv, false, os.Stdout, os.Stderr}
+	for _, sf := range settings {
+		sf(s)
+	}
+	return s
+}
+
+type Setting func(*Stdio)
+
+func VerboseVar(v *bool) Setting {
+	return func(s *Stdio) {
+		s.verbose = v
+	}
+}
+
+func QuietVar(v *bool) Setting {
+	return func(s *Stdio) {
+		s.quiet = v
+	}
+}
+
+func SyncVar(v *bool) Setting {
+	return func(s *Stdio) {
+		s.sync = v
+	}
+}
+
+func Stdout(w io.Writer) Setting {
+	return func(s *Stdio) {
+		s.stdout = w
+	}
+}
+
+func Stderr(w io.Writer) Setting {
+	return func(s *Stdio) {
+		s.stderr = w
+	}
+}
+
+func AutoNL(a bool) Setting {
+	return func(s *Stdio) {
+		s.auto = a
+	}
+}
+
+func Clone(settings ...Setting) *Stdio {
+	return defaultStdio.Clone(settings...)
+}
+
+func (s *Stdio) Clone(settings ...Setting) *Stdio {
+	sc := &Stdio{s.verbose, s.quiet, s.sync, s.auto, s.stdout, s.stderr}
+	for _, sf := range settings {
+		sf(sc)
+	}
+	return sc
 }
 
 func (s *Stdio) VerboseVar(v *bool) *bool {
@@ -47,10 +104,18 @@ func (s *Stdio) VerboseVar(v *bool) *bool {
 	return old
 }
 
-func (s *Stdio) QuietVar(q *bool) *bool {
+func (s *Stdio) QuietVar(v *bool) *bool {
 	old := s.quiet
-	if q != nil {
-		s.quiet = q
+	if v != nil {
+		s.quiet = v
+	}
+	return old
+}
+
+func (s *Stdio) SyncVar(v *bool) *bool {
+	old := s.sync
+	if v != nil {
+		s.sync = v
 	}
 	return old
 }
@@ -74,8 +139,13 @@ func (s *Stdio) Stderr(w io.Writer) io.Writer {
 func (s *Stdio) Reset() {
 	*s.verbose = false
 	*s.quiet = false
+	*s.sync = false
 	s.stdout = os.Stdout
 	s.stderr = os.Stderr
+}
+
+type syncer interface {
+	Sync()
 }
 
 func (s *Stdio) emit(v bool, w io.Writer, args ...interface{}) {
@@ -83,7 +153,16 @@ func (s *Stdio) emit(v bool, w io.Writer, args ...interface{}) {
 		return
 	}
 
-	fmt.Fprintln(w, args...)
+	out := fmt.Sprintln(args...)
+	if !s.auto {
+		out = out[:len(out)-1]
+	}
+
+	fmt.Fprint(w, out)
+
+	if sw, ok := w.(syncer); ok && *s.sync {
+		sw.Sync()
+	}
 }
 
 func (s *Stdio) Warn(args ...interface{})    { s.emit(false, s.stderr, args...) }
@@ -96,8 +175,11 @@ func (s *Stdio) Babblef(msg string, args ...interface{})  { s.Babble(fmt.Sprintf
 func (s *Stdio) Cautionf(msg string, args ...interface{}) { s.Caution(fmt.Sprintf(msg, args...)) }
 func (s *Stdio) Mentionf(msg string, args ...interface{}) { s.Mention(fmt.Sprintf(msg, args...)) }
 
-func QuietVar(v *bool)   { defaultStdio.QuietVar(v) }
-func VerboseVar(v *bool) { defaultStdio.VerboseVar(v) }
+func Defaults(settings ...Setting) {
+	for _, sf := range settings {
+		sf(defaultStdio)
+	}
+}
 
 func Warn(args ...interface{})    { defaultStdio.Warn(args...) }
 func Babble(args ...interface{})  { defaultStdio.Babble(args...) }
