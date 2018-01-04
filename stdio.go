@@ -25,7 +25,7 @@ var (
 	quietValue   = false
 	verboseValue = false
 	syncValue    = false
-	defaultStdio = &Stdio{&verboseValue, &quietValue, &syncValue, false, os.Stdout, os.Stderr}
+	defaultStdio = &Stdio{&verboseValue, &quietValue, &syncValue, true, os.Stdout, os.Stderr}
 )
 
 type Stdio struct {
@@ -39,7 +39,7 @@ type Stdio struct {
 
 func New(settings ...Setting) *Stdio {
 	var vv, qv, sv bool
-	s := &Stdio{&vv, &qv, &sv, false, os.Stdout, os.Stderr}
+	s := &Stdio{&vv, &qv, &sv, true, os.Stdout, os.Stderr}
 	for _, sf := range settings {
 		sf(s)
 	}
